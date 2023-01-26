@@ -31,6 +31,21 @@ class BlogTests(TestCase):
         response = self.client.get("/post/1/")
         self.assertEqual(response.status_code, 200)
 
+    def test_url_exists_at_correct_location_createview(self):
+        response = self.client.get("/post/new/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "post_new.html")
+
+    def test_url_exists_at_correct_location_updateview(self):
+        response = self.client.get("/post/1/edit/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "post_edit.html")
+
+    def test_url_exists_at_correct_location_createview(self):
+        response = self.client.get("/post/1/delete/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "post_delete.html")
+
     def test_post_list_view(self):
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
@@ -49,3 +64,25 @@ class BlogTests(TestCase):
         self.assertEqual(no_response.status_code, 404)
         self.assertTemplateUsed(response, "post_detail.html")
         self.assertContains(response, self.post.title)
+
+    def test_post_createview(self):
+        response = self.client.post(
+            reverse("post_new"),
+            {"title": "New title", "body": "New text", "author": self.user.id},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Post.objects.last().title, "New title")
+        self.assertEqual(Post.objects.last().body, "New text")
+
+    def test_post_updateview(self):
+        response = self.client.post(
+            reverse("post_edit", args="1"),
+            {"title": "Updated title", "body": "Updated text"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Post.objects.last().title, "Updated title")
+        self.assertEqual(Post.objects.last().body, "Updated text")
+
+    def test_post_deleteview(self):
+        response = self.client.post(reverse("post_delete", args="1"))
+        self.assertEqual(response.status_code, 302)
